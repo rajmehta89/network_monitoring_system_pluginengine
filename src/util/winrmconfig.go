@@ -1,150 +1,129 @@
-package util
+	package windows
 
-import (
-	"bytes"
-	"fmt"
-	"github.com/masterzen/winrm"
-	"time"
-)
+	import (
+		"bytes"
+		"fmt"
+		"github.com/masterzen/winrm"
+		"time"
+	)
 
-type Config struct {
-	IP       string
-	Username string
-	Password string
-	Timeout  time.Duration
-}
+	type Config struct {
+		IP       string
+		Username string
+		Password string
+		Timeout  time.Duration
+	}
 
-var (
 
-	client *winrm.Client
+	/*
+	InitWinRMClient initializes and returns a new WinRM client.
 
-	shell *winrm.Shell
+	Parameters:
+	- config: Config struct containing IP, Username, Password, and Timeout.
 
-)
+	Returns:
+	- A WinRM client instance.
+	- An error if initialization fails.
+	*/
+	func InitWinRMClient(config Config) (*winrm.Client, error) {
 
-/*
-InitWinRMClient initializes a WinRM client with the provided configuration.
+		endpoint := winrm.NewEndpoint(config.IP, 5985, false, false, nil, nil, nil, config.Timeout)
 
-Parameters:
-- config: A Config struct containing the following fields:
-  - IP: The IP address of the target system.
-  - Username: The username for authentication.
-  - Password: The password for authentication.
-  - Timeout: The timeout duration for the WinRM connection.
+		client, err := winrm.NewClient(endpoint, config.Username, config.Password)
 
-Returns:
-- An error if the client initialization fails, otherwise nil.
-*/
-func InitWinRMClient(config Config) error {
+		if err != nil {
 
-	endpoint := winrm.NewEndpoint(config.IP, 5985, false, false, nil, nil, nil, config.Timeout)
+			logInstance.LogError(fmt.Errorf("failed to create WinRM client: %v", err))
 
-	var err error
+			return nil, err
 
-	client, err = winrm.NewClient(endpoint, config.Username, config.Password)
+		}
 
-	if err != nil {
-
-		logInstance.LogError(fmt.Errorf("failed to create WinRM client: %v", err))
-
-		return err
+		return client, nil
 
 	}
 
-	return nil
-}
+	/*
+	InitWinRMShell initializes a new WinRM shell session for the provided client.
 
-/*
-InitWinRMShell initializes a WinRM shell session.
+	Parameters:
+	- client: A WinRM client instance.
 
-Returns:
-- An error if the shell initialization fails, otherwise nil.
-*/
-func InitWinRMShell() error {
+	Returns:
+	- A WinRM shell instance.
+	- An error if shell creation fails.
+	*/
+	func InitWinRMShell(client *winrm.Client) (*winrm.Shell, error) {
 
-	var err error
+		shell, err := client.CreateShell()
 
-	shell, err = client.CreateShell()
+		if err != nil {
 
-	if err != nil {
+			logInstance.LogError(fmt.Errorf("failed to create WinRM shell: %v", err))
 
-		logInstance.LogError(fmt.Errorf("Failed to create WinRM shell: %v", err))
+			return nil, err
 
-		return err
+		}
 
-	}
-
-	return nil
-
-}
-
-/*
-CloseWinRMShell closes the WinRM shell session if it is open.
-
-This function performs the following steps:
-1. Checks if the `shell` is not nil.
-2. Closes the `shell` if it is open.
-3. Sets the `shell` to nil.
-*/
-func CloseWinRMShell() {
-
-	if shell != nil {
-
-		shell.Close()
-
-		shell = nil
-
-		logInstance.LogInfo("WinRM shell closed")
+		return shell, nil
 
 	}
 
-}
 
-/*
-ExecuteAndFetchWindowsCounters executes a given PowerShell command on a remote Windows system using WinRM and fetches the output.
 
-Parameters:
-- command: A string containing the PowerShell command to be executed.
+	/*
+	CloseWinRMShell closes the provided WinRM shell session.
 
-Returns:
-- A string containing the trimmed output of the command if successful.
-- "0" if the WinRM client is not initialized or if the command execution fails.
-*/
+	Parameters:
+	- shell: The WinRM shell instance to be closed.
+	*/
+	func CloseWinRMShell(shell *winrm.Shell) {
 
-// ExecuteAndFetchWindowsCounters executes a PowerShell command over WinRM and ensures full execution
-func ExecuteAndFetchWindowsCounters(command string) string {
+		if shell != nil {
 
-	if client == nil {
+			shell.Close()
 
-		logInstance.LogInfo("Error: WinRM client is not initialized")
+			logInstance.LogInfo("WinRM shell closed")
 
-		return ""
+		}
 
 	}
 
-	var stdout, stderr bytes.Buffer
+	
+	func ExecuteCommand(client *winrm.Client, shell *winrm.Shell, command string) string {
 
-	exitCode, err := client.Run(`powershell -ExecutionPolicy Bypass -NoProfile -Command "`+command+`"`, &stdout, &stderr)
+		if client == nil || shell == nil {
 
-	if err != nil {
+			logInstance.LogError(fmt.Errorf("WinRM client or shell is not initialized"))
 
-		logInstance.LogError(fmt.Errorf("Execution error: %v",err))
+			return ""
 
-		logInstance.LogError(fmt.Errorf("Stderr: %s", stderr.String()))
+		}
 
-		return ""
+		var stdout, stderr bytes.Buffer
+
+		exitCode, err := client.Run(`powershell -ExecutionPolicy Bypass -NoProfile -Command "`+command+`"`, &stdout, &stderr)
+
+		if err != nil {
+
+			logInstance.LogError(fmt.Errorf("Execution error: %v",err))
+
+			logInstance.LogError(fmt.Errorf("Stderr: %s", stderr.String()))
+
+			return ""
+		}
+
+		if exitCode != 0 {
+
+			logInstance.LogError(fmt.Errorf("Command failed with exit code %d\n", exitCode))
+
+			logInstance.LogError(fmt.Errorf("Stderr: %s\n", stderr.String()))
+
+			return ""
+		}
+
+		output := stdout.String()
+
+		return output
 	}
 
-	if exitCode != 0 {
-
-		logInstance.LogError(fmt.Errorf("Command failed with exit code %d\n", exitCode))
-
-		logInstance.LogError(fmt.Errorf("Stderr: %s\n", stderr.String()))
-
-		return ""
-	}
-
-	output := stdout.String()
-
-	return output
-}
