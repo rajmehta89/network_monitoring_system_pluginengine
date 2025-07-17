@@ -1,4 +1,4 @@
-	package windows
+	package util
 
 	import (
 		"bytes"
@@ -11,6 +11,7 @@
 		IP       string
 		Username string
 		Password string
+		Port     int
 		Timeout  time.Duration
 	}
 
@@ -27,7 +28,9 @@
 	*/
 	func InitWinRMClient(config Config) (*winrm.Client, error) {
 
-		endpoint := winrm.NewEndpoint(config.IP, 5985, false, false, nil, nil, nil, config.Timeout)
+		port := int(config.Port)
+
+		endpoint := winrm.NewEndpoint(config.IP, port, false, false, nil, nil, nil, config.Timeout)
 
 		client, err := winrm.NewClient(endpoint, config.Username, config.Password)
 

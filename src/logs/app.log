@@ -1,90 +1,14 @@
-2025/03/12 11:05:55.866933 INFO: Starting ZeroMQ Server...
-2025/03/12 11:05:55.867058 INFO: Router socket created successfully
-2025/03/12 11:05:55.867116 INFO: Successfully bound router socket
-2025/03/12 11:05:55.867147 INFO: ZMQ Router started, waiting for requests...
-2025/03/12 11:05:55.867151 INFO: worker started
-2025/03/12 11:05:55.867255 INFO: Worker 3 ready and connected to DEALER
-2025/03/12 11:05:55.867486 INFO: Worker 2 ready and connected to DEALER
-2025/03/12 11:05:55.867520 INFO: Worker 4 ready and connected to DEALER
-2025/03/12 11:05:55.867534 INFO: Worker 1 ready and connected to DEALER
-2025/03/12 11:05:55.867579 INFO: Worker 5 ready and connected to DEALER
-2025/03/12 11:07:02.983961 INFO: Worker 3 processing request: {"RequestType":"provisioning","ip":"172.20.10.5","username":"BHAGATJI","password":"MAHARSHI01","SystemType":"windows","discovery_profile_id":2}
-2025/03/12 11:07:02.984234 INFO: Valid JSON format received
-2025/03/12 11:07:02.984259 INFO: Handling provisioning request
-2025/03/12 11:07:02.984268 INFO: Received discovery type: windows
-2025/03/12 11:07:02.984289 INFO: Initialized WinRM client successfully
-2025/03/12 11:07:06.049455 ERROR: Failed to create WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:07:06.049520 ERROR: Error creating WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:07:06.049672 INFO: Provisioning completed for:windows
-2025/03/12 11:07:06.049693 INFO: Worker 3 sending response: {
-  "RequestType": "provisioning",
-  "SystemType": "windows",
-  "discovery_profile_id": 2,
-  "errors": {
-    "winrm_shell_error": "Error creating WinRM shell: unknown error Post \"http://172.20.10.5:5985/wsman\": dial tcp 172.20.10.5:5985: connect: no route to host"
-  },
-  "ip": "172.20.10.5",
-  "password": "MAHARSHI01",
-  "status": "fail",
-  "username": "BHAGATJI"
-}
-2025/03/12 11:09:02.983942 INFO: Worker 2 processing request: {"RequestType":"provisioning","ip":"172.20.10.5","username":"BHAGATJI","password":"MAHARSHI01","SystemType":"windows","discovery_profile_id":2}
-2025/03/12 11:09:02.984153 INFO: Valid JSON format received
-2025/03/12 11:09:02.984169 INFO: Handling provisioning request
-2025/03/12 11:09:02.984181 INFO: Received discovery type: windows
-2025/03/12 11:09:02.984211 INFO: Initialized WinRM client successfully
-2025/03/12 11:09:06.049358 ERROR: Failed to create WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:09:06.049382 ERROR: Error creating WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:09:06.049423 INFO: Provisioning completed for:windows
-2025/03/12 11:09:06.049429 INFO: Worker 2 sending response: {
-  "RequestType": "provisioning",
-  "SystemType": "windows",
-  "discovery_profile_id": 2,
-  "errors": {
-    "winrm_shell_error": "Error creating WinRM shell: unknown error Post \"http://172.20.10.5:5985/wsman\": dial tcp 172.20.10.5:5985: connect: no route to host"
-  },
-  "ip": "172.20.10.5",
-  "password": "MAHARSHI01",
-  "status": "fail",
-  "username": "BHAGATJI"
-}
-2025/03/12 11:11:02.979034 INFO: Worker 4 processing request: {"RequestType":"provisioning","ip":"172.20.10.5","username":"BHAGATJI","password":"MAHARSHI01","SystemType":"windows","discovery_profile_id":2}
-2025/03/12 11:11:02.979078 INFO: Valid JSON format received
-2025/03/12 11:11:02.979081 INFO: Handling provisioning request
-2025/03/12 11:11:02.979083 INFO: Received discovery type: windows
-2025/03/12 11:11:02.979088 INFO: Initialized WinRM client successfully
-2025/03/12 11:11:06.048951 ERROR: Failed to create WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:11:06.048969 ERROR: Error creating WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:11:06.048992 INFO: Provisioning completed for:windows
-2025/03/12 11:11:06.049009 INFO: Worker 4 sending response: {
-  "RequestType": "provisioning",
-  "SystemType": "windows",
-  "discovery_profile_id": 2,
-  "errors": {
-    "winrm_shell_error": "Error creating WinRM shell: unknown error Post \"http://172.20.10.5:5985/wsman\": dial tcp 172.20.10.5:5985: connect: no route to host"
-  },
-  "ip": "172.20.10.5",
-  "password": "MAHARSHI01",
-  "status": "fail",
-  "username": "BHAGATJI"
-}
-2025/03/12 11:14:52.643267 INFO: Worker 1 processing request: {"RequestType":"provisioning","ip":"172.20.10.5","username":"BHAGATJI","password":"MAHARSHI01","SystemType":"windows","discovery_profile_id":2}
-2025/03/12 11:14:52.643331 INFO: Valid JSON format received
-2025/03/12 11:14:52.643338 INFO: Handling provisioning request
-2025/03/12 11:14:52.643341 INFO: Received discovery type: windows
-2025/03/12 11:14:52.643349 INFO: Initialized WinRM client successfully
-2025/03/12 11:14:55.713008 ERROR: Failed to create WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:14:55.713025 ERROR: Error creating WinRM shell: unknown error Post "http://172.20.10.5:5985/wsman": dial tcp 172.20.10.5:5985: connect: no route to host
-2025/03/12 11:14:55.713053 INFO: Provisioning completed for:windows
-2025/03/12 11:14:55.713058 INFO: Worker 1 sending response: {
-  "RequestType": "provisioning",
-  "SystemType": "windows",
-  "discovery_profile_id": 2,
-  "errors": {
-    "winrm_shell_error": "Error creating WinRM shell: unknown error Post \"http://172.20.10.5:5985/wsman\": dial tcp 172.20.10.5:5985: connect: no route to host"
-  },
-  "ip": "172.20.10.5",
-  "password": "MAHARSHI01",
-  "status": "fail",
-  "username": "BHAGATJI"
-}
+2025/03/29 14:15:23.418611 INFO: Starting ZeroMQ Server...
+2025/03/29 14:15:23.418649 INFO: ZMQ Router started, waiting for requests...
+2025/03/29 14:15:23.418652 INFO: worker started
+2025/03/29 14:15:23.419002 INFO: Router socket created successfully
+2025/03/29 14:15:23.419030 INFO: Router socket created successfully
+2025/03/29 14:15:23.419085 INFO: Router socket created successfully
+2025/03/29 14:15:23.419099 INFO: Successfully bound router socket
+2025/03/29 14:15:23.419108 ERROR: Failed to bind router socket: address already in use
+2025/03/29 14:15:23.419122 INFO: Sender is ready and bound to PUSH socket
+2025/03/29 14:15:23.419138 ERROR: Failed to bind router socket: address already in use
+2025/03/29 14:15:23.419166 INFO: Router socket created successfully
+2025/03/29 14:15:23.419194 ERROR: Failed to bind router socket: address already in use
+2025/03/29 14:15:23.419198 INFO: Router socket created successfully
+2025/03/29 14:15:23.419231 ERROR: Failed to bind router socket: address already in use

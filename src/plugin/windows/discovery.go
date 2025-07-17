@@ -4,12 +4,14 @@ import (
 	"NMS/src/util"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
 
 const (
 	SystemTypeWindows       = "windows"
+	DefaultWinRMPort  = 5985
 )
 
 /*
@@ -38,6 +40,18 @@ func discover(responseData map[string]interface{}) string {
 
 	password, passwordOk := responseData["password"].(string)
 
+
+	port, portOk := responseData["port"].(float64) // Check if port exists and is float64
+
+	if !portOk {
+
+		port = float64(DefaultWinRMPort)
+
+	}
+
+	finalPort := int(port)
+
+
 	if !ipOk || !usernameOk || !passwordOk || ip == "" || username == "" || password == "" {
 
 		logInstance.LogError(fmt.Errorf("Missing required fields: IP, Username, Password"))
@@ -53,16 +67,23 @@ func discover(responseData map[string]interface{}) string {
 
 
 	config := util.Config{
-		IP:       ip,
+
+		IP: ip,
+
 		Username: username,
+
 		Password: password,
-		Timeout:  2 * time.Minute,
+
+		Port:  finalPort,
+
+		Timeout:  30 * time.Second,
+
 	}
 
 
-	if err := util.InitWinRMClient(config); err != nil {
+	client, err := util.InitWinRMClient(config)
 
-		logInstance.LogError(fmt.Errorf("Failed to initialize WinRM client: %v", err))
+	if err != nil {
 
 		errorData["winrm_init_error"] = fmt.Sprintf("Failed to initialize WinRM client: %v", err)
 
@@ -75,7 +96,9 @@ func discover(responseData map[string]interface{}) string {
 	}
 
 
-	if err := util.InitWinRMShell(); err != nil {
+	shell, err := util.InitWinRMShell(client)
+
+	if  err != nil {
 
 		logInstance.LogError(fmt.Errorf("Error creating WinRM shell: %v", err))
 
@@ -89,25 +112,39 @@ func discover(responseData map[string]interface{}) string {
 
 	}
 
+	defer util.CloseWinRMShell(shell) // Ensure shell is closed after execution
 
 	command := "hostname"
 
-	output := util.ExecuteAndFetchWindowsCounters(command)
+	output := util.ExecuteCommand(client, shell, command)
+
+	if output == "" {
+
+		errorData["execution_error"] = "Failed to execute command or empty output received"
+
+		responseData["errors"] = errorData
+
+		jsonResponse, _ := json.MarshalIndent(responseData, "", "  ")
+
+		return string(jsonResponse)
+
+	}
 
 	logInstance.LogInfo(command + " command executed successfully")
+
+	cleanOutput := strings.TrimSpace(output)
 
 	responseData["result"] = map[string]string{
 
 		"message": "Windows machine discovered successfully",
 
-		"output":  output,
+		"hostname": cleanOutput,
+
 	}
 
 	responseData["status"] = "success"
 
 	jsonResponse, _ := json.MarshalIndent(responseData, "", "")
-
-	fmt.Println("json",jsonResponse)
 
 	return string(jsonResponse)
 
@@ -198,8 +235,6 @@ func HandleDiscovery(responseData map[string]interface{}) string {
 		return "Error: discover() did not return a Json string"
 	}
 
-
-	fmt.Println("4hfklmf,f",result)
 
 	return result
 

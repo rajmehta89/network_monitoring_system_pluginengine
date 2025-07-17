@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pebbe/zmq4"
 	"sync"
+
+	"github.com/pebbe/zmq4"
 )
 
 type Request struct {
@@ -20,14 +21,16 @@ type Request struct {
 
 var (
 	logInstance = util.InitializeLogger()
+	resultChan  = make(chan string, 100)
 )
 
 const (
-	routerAddress           = "tcp://*:5555"
-	DealerAddress            = "inproc://reuqesthandlers"
+	inBoundAddress          = "tcp://127.0.0.1:5555" // Connect to Java ZMQ server
+	outBoundAddress         = "tcp://127.0.0.1:5556" // If needed, otherwise remove
 	workerCount             = 5
 	RequestTypeDiscovery    = "discovery"
 	RequestTypeProvisioning = "provisioning"
+	RequestTypeHealth       = "health"
 )
 
 var wg sync.WaitGroup
@@ -78,7 +81,6 @@ func handleRequest(requestStr string) string {
 
 	}
 
-
 	requestType, ok := responseData["RequestType"].(string)
 
 	if !ok {
@@ -95,8 +97,13 @@ func handleRequest(requestStr string) string {
 
 	}
 
-
 	switch requestType {
+
+	case RequestTypeHealth:
+
+		logInstance.LogInfo("Handling health request")
+
+		return util.HandleHealthCheck(responseData)
 
 	case RequestTypeDiscovery:
 
@@ -126,38 +133,41 @@ func handleRequest(requestStr string) string {
 
 }
 
+func worker(ID int, wg *sync.WaitGroup) {
 
-
-
-func worker(DealerAddr string, ID int, wg *sync.WaitGroup) {
-
-	worker, err := zmq4.NewSocket(zmq4.DEALER) // Use DEALER instead of REP
+	socket, err := zmq4.NewSocket(zmq4.PULL)
 
 	if err != nil {
 
-		logInstance.LogError(fmt.Errorf("Worker %d failed to create socket: %v", ID, err))
+		logInstance.LogError(errors.New("Failed to create router socket: " + err.Error()))
 
 		return
 
+	} else {
+
+		logInstance.LogInfo("Router socket created successfully")
+
 	}
 
-	defer worker.Close()
+	defer socket.Close()
 
-	err = worker.Connect(DealerAddr)
+	err = socket.Connect(inBoundAddress)
 
 	if err != nil {
 
-		logInstance.LogError(fmt.Errorf("Worker %d failed to connect to DEALER: %v", ID, err))
+		logInstance.LogError(errors.New("Failed to bind router socket: " + err.Error()))
 
 		return
 
-	}
+	} else {
 
-	logInstance.LogInfo(fmt.Sprintf("Worker %d ready and connected to DEALER", ID))
+		logInstance.LogInfo("Successfully bound router socket")
+
+	}
 
 	for {
 
-		msgParts, err := worker.RecvMessage(0)
+		msg, err := socket.Recv(0)
 
 		if err != nil {
 
@@ -167,27 +177,7 @@ func worker(DealerAddr string, ID int, wg *sync.WaitGroup) {
 
 		}
 
-		if len(msgParts) < 2 {
-
-			logInstance.LogError(fmt.Errorf("Worker %d received an invalid message format", ID))
-
-			continue
-
-		}
-
-		identity := msgParts[0]
-
-		clientID:=msgParts[1]
-
-		emptyFrame := msgParts[2]
-
-		request := msgParts[3]
-
-		logInstance.LogInfo(fmt.Sprintf("Worker %d processing request: %s", ID, request))
-
-		response := handleRequest(request)
-
-		logInstance.LogInfo(fmt.Sprintf("Worker %d sending response: %s", ID, response))
+		response := handleRequest(msg)
 
 		jsonData, err := json.Marshal(response)
 
@@ -199,9 +189,50 @@ func worker(DealerAddr string, ID int, wg *sync.WaitGroup) {
 
 		}
 
-		worker.SendMessage(identity,clientID, emptyFrame, string(jsonData))
+		resultChan <- string(jsonData)
 
 	}
+
+}
+
+func sender() {
+
+	socket, err := zmq4.NewSocket(zmq4.PUSH)
+
+	if err != nil {
+
+		logInstance.LogError(errors.New("Sender failed to create PUSH socket: " + err.Error()))
+
+		return
+
+	}
+
+	defer socket.Close()
+
+	err = socket.Bind(outBoundAddress)
+
+	if err != nil {
+
+		logInstance.LogError(errors.New("Sender failed to bind to outbound: " + err.Error()))
+
+		return
+
+	}
+
+	logInstance.LogInfo("Sender is ready and bound to PUSH socket")
+
+	for msg := range resultChan {
+
+		_, err := socket.Send(msg, 0)
+
+		if err != nil {
+
+			logInstance.LogError(fmt.Errorf("Failed to send message: %v", err))
+
+		}
+
+	}
+
 }
 
 /*
@@ -221,73 +252,18 @@ Logs any errors encountered during the process.
 */
 func StartZMQServer() {
 
-	router, err := zmq4.NewSocket(zmq4.ROUTER)
-
-	if err != nil {
-
-		logInstance.LogError(errors.New("Failed to create router socket: " + err.Error()))
-
-		return
-
-	} else {
-
-		logInstance.LogInfo("Router socket created successfully")
-
-	}
-
-	defer router.Close()
-
-	err = router.Bind(routerAddress)
-
-	if err != nil {
-
-		logInstance.LogError(errors.New("Failed to bind router socket: " + err.Error()))
-
-		return
-
-	} else {
-
-		logInstance.LogInfo("Successfully bound router socket")
-
-	}
-
-	dealer, err := zmq4.NewSocket(zmq4.DEALER)
-
-	if err != nil {
-
-		logInstance.LogError(fmt.Errorf("Failed to create DEALER socket: %v", err))
-
-		return
-	}
-
-	defer dealer.Close()
-
-	if err := dealer.Bind(DealerAddress); err != nil {
-
-		logInstance.LogError(fmt.Errorf("Failed to bind DEALER socket: %v", err))
-
-		return
-	}
-
-
 	logInstance.LogInfo("ZMQ Router started, waiting for requests...")
 
 	logInstance.LogInfo("worker started")
+
+	go sender()
 
 	for i := 0; i < workerCount; i++ {
 
 		wg.Add(1)
 
-		go worker(DealerAddress,i+1,&wg)
+		go worker(i+1, &wg)
 
-	}
-
-
-	err = zmq4.Proxy(router, dealer, nil)
-
-	if err != nil {
-
-		logInstance.LogError(fmt.Errorf("ZeroMQ Proxy error: %v", err))
 	}
 
 	wg.Wait()

@@ -3,6 +3,7 @@ package main
 import (
 	"NMS/src/server"
 	"NMS/src/util"
+	"fmt"
 )
 
 /*
@@ -11,6 +12,8 @@ import (
  */
 func main() {
 
+	fmt.Println("🚀 Server started")
+
 	logger := util.InitializeLogger()
 
 	logger.LogInfo("Starting ZeroMQ Server...")
@@ -18,5 +21,3 @@ func main() {
 	server.StartZMQServer()
 
 }
-
-
