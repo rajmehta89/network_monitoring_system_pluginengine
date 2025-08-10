@@ -8,9 +8,8 @@ import (
 	"time"
 )
 
-
 const (
-	SystemTypeWindows       = "windows"
+	SystemTypeWindows = "windows"
 	DefaultWinRMPort  = 5985
 )
 
@@ -40,7 +39,6 @@ func discover(responseData map[string]interface{}) string {
 
 	password, passwordOk := responseData["password"].(string)
 
-
 	port, portOk := responseData["port"].(float64) // Check if port exists and is float64
 
 	if !portOk {
@@ -51,12 +49,11 @@ func discover(responseData map[string]interface{}) string {
 
 	finalPort := int(port)
 
-
 	if !ipOk || !usernameOk || !passwordOk || ip == "" || username == "" || password == "" {
 
 		logInstance.LogError(fmt.Errorf("Missing required fields: IP, Username, Password"))
 
-		errorData["missing_fields_error"] ="Missing required fields: IP, Username, Password"
+		errorData["missing_fields_error"] = "Missing required fields: IP, Username, Password"
 
 		responseData["errors"] = errorData
 
@@ -64,7 +61,6 @@ func discover(responseData map[string]interface{}) string {
 
 		return string(jsonResponse)
 	}
-
 
 	config := util.Config{
 
@@ -74,12 +70,10 @@ func discover(responseData map[string]interface{}) string {
 
 		Password: password,
 
-		Port:  finalPort,
+		Port: finalPort,
 
-		Timeout:  30 * time.Second,
-
+		Timeout: 30 * time.Second,
 	}
-
 
 	client, err := util.InitWinRMClient(config)
 
@@ -95,10 +89,9 @@ func discover(responseData map[string]interface{}) string {
 
 	}
 
-
 	shell, err := util.InitWinRMShell(client)
 
-	if  err != nil {
+	if err != nil {
 
 		logInstance.LogError(fmt.Errorf("Error creating WinRM shell: %v", err))
 
@@ -139,7 +132,6 @@ func discover(responseData map[string]interface{}) string {
 		"message": "Windows machine discovered successfully",
 
 		"hostname": cleanOutput,
-
 	}
 
 	responseData["status"] = "success"
@@ -149,7 +141,6 @@ func discover(responseData map[string]interface{}) string {
 	return string(jsonResponse)
 
 }
-
 
 /*
 handleDiscovery processes a discovery request for a specified system type.
@@ -199,7 +190,7 @@ func HandleDiscovery(responseData map[string]interface{}) string {
 
 		logInstance.LogInfo("Processing Windows system type for IP: " + fmt.Sprint(responseData["ip"]))
 
-		metrics =discover(responseData)
+		metrics = discover(responseData)
 
 		logInstance.LogInfo("Completed Windows system type processing for IP: " + fmt.Sprint(responseData["ip"]))
 
@@ -215,7 +206,6 @@ func HandleDiscovery(responseData map[string]interface{}) string {
 
 		}
 
-
 		errorData["discoveryError"] = "Unknown discovery type"
 
 		responseData["errors"] = errorData
@@ -226,7 +216,6 @@ func HandleDiscovery(responseData map[string]interface{}) string {
 
 	}
 
-
 	logInstance.LogInfo("Discovery completed for:" + systemType)
 
 	result, ok := metrics.(string)
@@ -235,9 +224,6 @@ func HandleDiscovery(responseData map[string]interface{}) string {
 		return "Error: discover() did not return a Json string"
 	}
 
-
 	return result
 
-
 }
-
